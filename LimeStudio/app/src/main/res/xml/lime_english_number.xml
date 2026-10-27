@@ -26,7 +26,7 @@
     limehd:keyWidth="10%p"
     limehd:horizontalGap="0px"
     limehd:verticalGap="0px"
-    limehd:keyHeight="@dimen/key_height"
+    limehd:keyHeight="@dimen/array_key_height"
     >
 	 <Row>
         <Key limehd:codes="49" limehd:keyLabel="1" limehd:keyEdgeFlags="left"/>
