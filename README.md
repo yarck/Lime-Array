@@ -1,5 +1,8 @@
 # ![萊姆輸入法](LimeStudio/app/src/main/res/drawable-hdpi/logo.png) 萊姆輸入法
 
+> **Lime-Array（萊姆行列）**：本 repo 是以萊姆輸入法為基礎、針對行列輸入法與三星平板調整的分支版本——三星風格鍵盤外觀、Windows 行列數字選字、接上實體鍵盤時自動收起虛擬鍵盤並顯示中英／輸入法狀態。
+> 修改說明見 [LIME-ARRAY.md](LIME-ARRAY.md)，下載：[LimeArray APK（最新版）](https://github.com/yarck/Lime-Array/releases/download/latest/LimeArray202661380-v6.1.38.apk)。以下為原專案說明。
+
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 LIME 是一套以繁體中文輸入為核心的開源輸入法專案，採用 GPL 授權並持續開源維護，目前支援 Android 與 iOS 兩大平台。
