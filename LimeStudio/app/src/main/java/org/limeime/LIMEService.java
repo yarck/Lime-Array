@@ -4565,6 +4565,11 @@ public class LIMEService extends InputMethodService
                             int selkeyOption = mLIMEPref.getSelkeyOption();
                             if (selkeyOption == 1) selkey = mixedModeSelkey + selkey;
                             else if (selkeyOption == 2) selkey = mixedModeSelkey + " " + selkey;
+
+                            // Lime-Array: label real candidates 1..0 (Windows 行列 style).
+                            if (arrayDigitSelectionActive()) {
+                                selkey = (arrayCandidateOffset(list) == 1 ? " " : "") + "1234567890";
+                            }
                         }
 
                         try {
@@ -4641,7 +4646,7 @@ public class LIMEService extends InputMethodService
                             }
                         }
 
-                        setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
+                        setSuggestions(list, finalHasPhysicalKeyPressed || arrayDigitSelectionActive(), selkey);
 
                         if (DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey
                                 + ", list.size:" + list.size()
@@ -5652,6 +5657,39 @@ public class LIMEService extends InputMethodService
         currentImKeys = (activeImKeys == null) ? "" : activeImKeys;
     }
 
+    /**
+     * Lime-Array: true when the Windows 行列 digit-selection rule is active for the current
+     * composing state — array IM, something being composed, and the buffer is not exactly "w"
+     * (where digits are still roots for the w1..w0 symbol codes).
+     */
+    private boolean arrayDigitSelectionActive() {
+        if (!LIME.IM_ARRAY.equals(activeIM) || mEnglishOnly) return false;
+        if (mComposing.length() == 0) return false;
+        return !(mComposing.length() == 1 && Character.toLowerCase(mComposing.charAt(0)) == 'w');
+    }
+
+    /** Offset of the first real candidate (skips the echoed composing-code entry, if shown). */
+    private static int arrayCandidateOffset(List<Mapping> list) {
+        return (list != null && !list.isEmpty() && list.get(0).isComposingCodeRecord()) ? 1 : 0;
+    }
+
+    /**
+     * Lime-Array: digits 1..9,0 select candidates 1..10 like Windows 行列.
+     * Returns true when the key was consumed.
+     */
+    private boolean handleArrayDigitSelection(int primaryCode) {
+        if (primaryCode < '0' || primaryCode > '9') return false;
+        if (!arrayDigitSelectionActive()) return false;
+        if (mCandidateList == null || mCandidateList.isEmpty()) return false;
+        int index = (primaryCode == '0' ? 9 : primaryCode - '1') + arrayCandidateOffset(mCandidateList);
+        if (index < mCandidateList.size() && !mCandidateList.get(index).isHasMoreRecordsMarkRecord()) {
+            pickCandidateManually(index);
+        }
+        // No candidate at that position: swallow the key (Windows 行列 ignores it) rather than
+        // appending the digit to the array code.
+        return true;
+    }
+
     private boolean handleSelkey(int primaryCode) {
         if (DEBUG)
             Log.i(TAG, "handleSelKey()");
@@ -5729,6 +5767,12 @@ public class LIMEService extends InputMethodService
                     + ", hasPhysicalKeyPressed = " + hasPhysicalKeyPressed
                     + ", currentSoftKeyboard=" + currentSoftKeyboard);
 
+
+        // Lime-Array: Windows 行列 style — digits 1..0 pick candidates (soft and physical keys).
+        if (handleArrayDigitSelection(primaryCode)) {
+            updateShiftKeyState(getCurrentInputEditorInfo());
+            return;
+        }
 
         //Jeremy '11,6,6 processing physical keyboard selkeys.
         //Move here '11,6,9 to have lower priority than hasnumbermapping
