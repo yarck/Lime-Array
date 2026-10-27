@@ -23,8 +23,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-
-      - uses: gradle/actions/setup-gradle@v5
+          cache: gradle
 
       - name: Build debug APK
         working-directory: LimeStudio
@@ -41,7 +40,7 @@ jobs:
           echo "name=$(basename "$apk")" >> "$GITHUB_OUTPUT"
           ls -la "$apk"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ steps.apk.outputs.name }}
           path: ${{ steps.apk.outputs.path }}
