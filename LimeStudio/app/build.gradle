@@ -37,6 +37,14 @@ if (keystorePropsFile.exists()) {
 android {
     namespace = 'org.limeime'
     signingConfigs {
+        // Lime-Array: fixed debug key so CI-built APKs can update each other in place.
+        debug {
+            storeFile = file('signing/lime-array-debug.p12')
+            storePassword = 'android'
+            keyAlias = 'limearray'
+            keyPassword = 'android'
+            storeType = 'pkcs12'
+        }
         if (hasReleaseSigning) {
             release {
                 storeFile = file(keystoreProps['storeFile'])
