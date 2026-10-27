@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<script>(function(){try{var sp=new URLSearchParams(location.search);var q=sp.get("theme");if(q==="dark"||q==="light")sessionStorage.setItem("lime-theme-test",q);var st=sessionStorage.getItem("lime-theme-test");var test=!!st||sp.has("theme")||sp.has("test");var pick=st||q;var d=pick?pick==="dark":matchMedia("(prefers-color-scheme:dark)").matches;var de=document.documentElement;de.setAttribute("data-theme",d?"dark":"light");if(test)de.classList.add("theme-test");}catch(e){}})();</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>常見問題 · 萊姆輸入法 使用手冊</title>
+<link rel="icon" type="image/png" href="../assets/lime-icon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="manual.css?v=8"/>
+<style>
+.faq{display:flex;flex-direction:column;gap:10px;margin:20px 0}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.faq summary{list-style:none;cursor:default;padding:17px 20px;font-weight:700;font-size:16.5px;
+  display:flex;align-items:flex-start;gap:12px;pointer-events:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary .q{font-family:var(--latin);color:var(--lime-deep);flex:none}
+.faq .a{padding:0 20px 18px 52px;color:#2C2C27}
+.faq .a p{margin:6px 0}
+@media(max-width:560px){.faq .a{padding-left:20px}}
+</style>
+</head>
+<body>
+
+<div class="m-top">
+  <div class="bar">
+    <a class="logo" href="../index.html"><img src="../assets/lime-icon.png" alt=""/><span class="wm">萊姆輸入法</span></a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切換深淺色模式" aria-pressed="false" title="切換深淺色模式"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.4 1.4M17.2 17.2L18.6 18.6M5 19l1.4-1.4M17.2 6.8L18.6 5.4"/></svg></button>
+  </div>
+</div>
+
+<div class="m-shell">
+  <aside class="m-side">
+    <div class="grp">開始</div>
+    <a href="index.html"><span class="n">00</span>手冊首頁</a>
+    <a href="quick-start.html"><span class="n">01</span>快速上手</a>
+    <div class="grp">日常使用</div>
+    <a href="keyboard-input.html"><span class="n">02</span>鍵盤輸入</a>
+    <a href="ime-management.html"><span class="n">03</span>管理輸入法</a>
+    <a href="preferences.html"><span class="n">04</span>喜好設定</a>
+    <div class="grp">資料與進階</div>
+    <a href="database-management.html"><span class="n">05</span>備份與還原</a>
+    <a href="advanced.html"><span class="n">06</span>進階自訂</a>
+    <div class="grp">支援</div>
+    <a href="troubleshooting.html"><span class="n">07</span>疑難排解</a>
+    <a class="on" href="faq.html"><span class="n">08</span>常見問題</a>
+    <div class="grp">法務</div>
+    <a href="privacy.html"><span class="n">09</span>隱私說明</a>
+    <a href="license.html"><span class="n">10</span>版權說明</a>
+  </aside>
+
+  <main class="m-content">
+    <nav class="m-toc">
+      <details>
+        <summary>📖 手冊目錄</summary>
+        <div class="list">
+          <a href="index.html"><span class="n">00</span>手冊首頁</a>
+          <a href="quick-start.html"><span class="n">01</span>快速上手</a>
+          <a href="keyboard-input.html"><span class="n">02</span>鍵盤輸入</a>
+          <a href="ime-management.html"><span class="n">03</span>管理輸入法</a>
+          <a href="preferences.html"><span class="n">04</span>喜好設定</a>
+          <a href="database-management.html"><span class="n">05</span>備份與還原</a>
+          <a href="advanced.html"><span class="n">06</span>進階自訂</a>
+          <a href="troubleshooting.html"><span class="n">07</span>疑難排解</a>
+          <a class="on" href="faq.html"><span class="n">08</span>常見問題</a>
+          <a href="privacy.html"><span class="n">09</span>隱私說明</a>
+          <a href="license.html"><span class="n">10</span>版權說明</a>
+        </div>
+      </details>
+    </nav>
+
+    <section class="manual-hero">
+      <span class="crumb">08 · 支援</span>
+      <h1>常見問題</h1>
+      <p>跨主題的快速解答。找不到答案時可先看這裡，或前往對應的主題頁與疑難排解。</p>
+    </section>
+
+    <div class="faq">
+      <details open>
+        <summary><span class="q">Q</span>萊姆輸入法要付費嗎？</summary>
+        <div class="a"><p>萊姆輸入法是自由、開源的軟體，原始碼公開，你可以自行取得並建置。Android 與 iOS 版都可免費下載，沒有廣告，也不會追蹤你的輸入。原始碼公開在 <a href="https://github.com/lime-ime/limeime" target="_blank" rel="noopener">GitHub</a>。如果你喜歡萊姆輸入法，歡迎到 Google Play 或 App Store 給我們五顆星評價，鼓勵團隊持續開發，也可以請萊姆團隊喝杯咖啡（即將推出⋯⋯）。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>萊姆輸入法會收集我打的字嗎？</summary>
+        <div class="a"><p>不會。萊姆輸入法不收集或傳送任何個人資料，學習記錄只儲存在你的裝置上。詳見「<a href="privacy.html">隱私說明</a>」。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>iPhone 的「允許完整取用」一定要開嗎？</summary>
+        <div class="a"><p>不一定。正常打字、安裝或匯入輸入法、還原資料庫都不需要先開啟。開啟後會解鎖備份資料庫、按鍵震動回饋與編輯字根資料表。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>支援哪些輸入法？</summary>
+        <div class="a"><p>注音、倉頡（含五代、香港字）、速成、快倉、大易、行列與行列 10、拼音、華象直覺、輕鬆、筆順五碼，以及自建輸入法。你也可以匯入自己的 <code>.cin</code> 碼表。下載方式見「<a href="ime-management.html">管理輸入法</a>」。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>LIME 有類似 iOS「替代文字」或三星鍵盤「文字捷徑」的功能嗎？</summary>
+        <div class="a">
+          <p>有。LIME 可以在每套輸入法中建立自定字根對應字詞或常用片語。請到「輸入法」，點選要設定的輸入法，再進入「瀏覽 / 編輯資料表」。在資料表畫面右上角點「＋」，把簡碼填入「字根」，把完整文字填入對應文字欄位，設定分數後按「確認新增」。分數愈高，該項目在候選列中的排序愈優先。</p>
+          <p>之後輸入簡碼時，完整文字會出現在候選列中供你選取。這和 iOS 的「替代文字」不完全相同，LIME 不會直接自動取代文字，而是讓你從候選列確認要送出的內容。詳細操作請看「<a href="ime-management.html#edit">管理輸入法 · 編輯輸入法與字根</a>」。</p>
+          <p>若使用 iPhone 或 iPad，編輯資料表前請先開啟「允許完整取用」，並把目前鍵盤切換為萊姆輸入法。</p>
+        </div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>注音可以換成倚天或許氏鍵盤嗎？</summary>
+        <div class="a"><p>可以。進入注音輸入法的詳細頁，於「注音鍵盤類型」選擇標準、倚天 41 鍵、倚天 26 鍵或許氏等配置。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>為什麼按 <code>,</code>、<code>.</code> 會直接輸出 <code>，</code>、<code>。</code>？如何改回半形標點？</summary>
+        <div class="a">
+          <p>部分輸入法，例如行列 10，預設將 <code>,.</code> 設為「結束鍵」。</p>
+          <p>啟用這項功能後：</p>
+          <ul>
+            <li>沒有組字時，按 <code>,</code> 會直接送出 <code>，</code>，按 <code>.</code> 會直接送出 <code>。</code>。</li>
+            <li>有組字和候選時，按 <code>,</code> 或 <code>.</code> 會送出目前選取的候選，再送出對應的全形標點。</li>
+          </ul>
+          <p>如果不需要這項功能，Android 和 iOS 都可以開啟 LIME 設定，進入「輸入法」，點選要調整的輸入法，再點選「結束鍵」，清除其中的 <code>,.</code> 後儲存。接著重新開啟鍵盤，不需要修改或重新匯入碼表。</p>
+          <p>清除後，<code>,</code> 和 <code>.</code> 會恢復為一般標點候選：</p>
+          <ul>
+            <li>按 <code>,</code> 時，候選字 0 是半形 <code>,</code>，候選字 1 是全形 <code>，</code>。</li>
+            <li>按 <code>.</code> 時，候選字 0 是半形 <code>.</code>，候選字 1 是全形 <code>。</code>。</li>
+          </ul>
+        </div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>換新手機，要怎麼把碼表和學習記錄帶過去？</summary>
+        <div class="a"><p>在舊機的「資料庫」分頁「備份資料庫」，把備份檔存到雲端或檔案，再到新機「還原資料庫」。若舊機是 iPhone/iPad，備份前請先開啟「允許完整取用」，並把目前鍵盤切換為萊姆輸入法。完整步驟見「<a href="database-management.html">備份與還原</a>」。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>Android 和 iPhone/iPad 的備份可以互相還原嗎？</summary>
+        <div class="a"><p>可以。完整資料庫備份可跨平台還原，Android 備份可以還原到 iPhone/iPad，iPhone/iPad 備份也可以還原到 Android。輸入法碼表、字根資料、關聯字詞、學習詞與候選排序會跟著資料庫一起還原。</p><p>喜好設定只會還原目前平台支援的項目。平台專屬設定，例如 iPad 分離鍵盤、iPhone 英文數字列、Android 實體鍵盤選項與系統鍵盤啟用狀態，跨平台還原後請重新確認。完整說明見「<a href="database-management.html">備份與還原</a>」。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>Android 與 iOS 的設定一樣嗎？</summary>
+        <div class="a"><p>核心功能一致，啟用步驟因系統而略有差異。主要差別在系統權限與語音輸入：iOS 的備份資料庫、按鍵震動回饋與編輯字根資料表需要「允許完整取用」，且不提供鍵盤內語音輸入。Android 可使用鍵盤內語音輸入（需麥克風權限），Android 13 起按鍵震動強度改由系統控制。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>iPhone 和 iPad 的鍵盤一樣嗎？</summary>
+        <div class="a"><p>不一樣，iPhone 與 iPad 使用不同的鍵盤版面。iPad 版面較完整，按鍵上提供副鍵符號，可向下滑動或長按直接輸入，並支援分割鍵盤，iPhone 版面較精簡，英文模式可另外開啟數字列。詳見「<a href="keyboard-input.html#ipad">鍵盤輸入 · iPad 副鍵符號與分割鍵盤</a>」。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>為什麼 LIME 6 不能再用空白鍵左右滑動切換輸入法？</summary>
+        <div class="a">
+          <p>LIME 3 的空白鍵左右滑動手勢用來切換萊姆內部輸入法。LIME 6 已將這個手勢改為左右移動文字游標，方便直接修改句子中間的文字。</p>
+          <p>若要切換萊姆內部輸入法，請長按空白鍵開啟輸入法選單。空白鍵移動游標的操作與限制，請看「<a href="keyboard-input.html#space">鍵盤輸入 · 用空白鍵移動游標</a>」。</p>
+        </div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>打不出字怎麼辦？</summary>
+        <div class="a"><p>先確認鍵盤已啟用、至少安裝一套輸入法且目前為中文模式。詳細排查見「<a href="troubleshooting.html">疑難排解</a>」。</p></div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>為什麼按刪除鍵時，有時會刪掉已送出的文字？</summary>
+        <div class="a">
+          <p>刪除鍵會依目前是否還有組字碼而改變行為。有組字碼時，刪除鍵會先刪除最後一碼組字碼，例如注音輸入碼 <code>su3</code> 會退回 <code>su</code>。沒有組字碼時，刪除鍵就是一般文字刪除鍵，會刪除游標前方已送出的文字。</p>
+          <p>舊版曾讓刪除鍵順便關閉候選列，後來改成把「刪除文字」和「取消候選列」分開。原因是畫面上有候選字、關聯字或英文建議字時，不一定代表還有正在組字的輸入碼。若刪除鍵同時負責關閉候選列，使用者想刪除已送出的文字時，可能會先被候選列攔下來，刪除行為就會變得不一致。</p>
+          <p><strong>注意：</strong>候選列左側的 X 用來取消目前組字或關閉候選列，作用比較像電腦輸入法的 Esc。這樣一般按鍵可以維持原本的輸入與刪除行為，候選列則用明確的取消鍵處理。</p>
+        </div>
+      </details>
+      <details open>
+        <summary><span class="q">Q</span>我想回報問題或貢獻，該去哪裡？</summary>
+        <div class="a"><p>歡迎到 <a href="https://github.com/lime-ime/limeime/issues" target="_blank" rel="noopener">GitHub Issues</a> 回報問題或提出建議，也歡迎與開發團隊聯絡參與開發。</p></div>
+      </details>
+    </div>
+
+    <div class="manual-note">
+      <span class="ti">i</span>
+      <div><b>還是找不到答案？</b>各主題頁有更完整的說明，或到 <a href="https://github.com/lime-ime/limeime/issues" target="_blank" rel="noopener">GitHub Issues</a> 與社群討論。</div>
+    </div>
+
+    <div class="m-pagenav">
+      <a class="prev" href="troubleshooting.html"><div class="dir">← 上一篇</div><div class="ttl">疑難排解</div></a>
+      <a class="next" href="index.html"><div class="dir">回到 →</div><div class="ttl">手冊首頁</div></a>
+    </div>
+  </main>
+</div>
+
+
+<script>(function(){function testMode(){try{return !!sessionStorage.getItem("lime-theme-test")||new URLSearchParams(location.search).has("theme")||new URLSearchParams(location.search).has("test");}catch(e){return false;}}function resolve(){try{var st=sessionStorage.getItem("lime-theme-test");if(st)return st;var q=new URLSearchParams(location.search).get("theme");if(q==="dark"||q==="light"){sessionStorage.setItem("lime-theme-test",q);return q;}}catch(e){}return matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}function apply(){var d=resolve()==="dark";var de=document.documentElement;de.setAttribute("data-theme",d?"dark":"light");if(testMode())de.classList.add("theme-test");document.querySelectorAll("img.themed").forEach(function(im){var lt=im.getAttribute("data-light");if(!lt){lt=im.getAttribute("src");im.setAttribute("data-light",lt);}im.src=d?im.getAttribute("data-dark"):lt;});var b=document.getElementById("theme-toggle");if(b)b.setAttribute("aria-pressed",String(d));}document.addEventListener("DOMContentLoaded",function(){apply();var b=document.getElementById("theme-toggle");if(b)b.addEventListener("click",function(){try{sessionStorage.setItem("lime-theme-test",resolve()==="dark"?"light":"dark");}catch(e){}apply();});try{matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){if(!testMode())apply();});}catch(e){}});})();</script>
+</body>
+</html>

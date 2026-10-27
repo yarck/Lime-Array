@@ -1,0 +1,57 @@
+name: New Release
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  release:
+    name: Create Release
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify downloadable database integrity
+        run: |
+          BASE_REF="$(git describe --tags --abbrev=0 HEAD^)"
+          python3 scripts/test_limedb_order.py --all --base-ref "$BASE_REF"
+          python3 scripts/test_hahacj_limedb.py
+          python3 scripts/test_tricode_limedb.py
+
+      - name: Read version from build.gradle
+        id: version
+        run: |
+          ver=$(grep "versionName '" LimeStudio/app/build.gradle | sed "s/.*'\(.*\)'.*/\1/" | tr -d '[:space:]')
+          code=$(grep "versionCode [0-9]" LimeStudio/app/build.gradle | sed 's/.*versionCode[[:space:]]*//' | tr -d '[:space:]')
+          apk="LIMEHD${code}-${ver}.apk"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          echo "tag=v$ver" >> "$GITHUB_OUTPUT"
+          echo "apkPath=LimeStudio/app/release/${apk}" >> "$GITHUB_OUTPUT"
+
+      - name: Read release notes from RELEASE_DRAFT.md
+        id: notes
+        run: |
+          {
+            echo 'body<<RELEASE_EOF'
+            cat docs/RELEASE_DRAFT.md
+            echo 'RELEASE_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: LIME ${{ steps.version.outputs.tag }}
+          body: ${{ steps.notes.outputs.body }}
+          files: ${{ steps.version.outputs.apkPath }}

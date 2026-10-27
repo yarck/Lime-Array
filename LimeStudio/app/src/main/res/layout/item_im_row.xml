@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Grey rounded-square tile carrying the IM's representative character
+         (ㄅ 倉 速 易 行 拼 …) for IM rows, or a chat glyph for the 關聯字庫 row.
+         A single neutral badge — replaces the former per-IM coloured icon. -->
+    <FrameLayout
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_im_badge">
+
+        <TextView
+            android:id="@+id/tv_im_badge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/im_badge_foreground"
+            android:contentDescription="@null" />
+
+        <ImageView
+            android:id="@+id/iv_im_badge"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            app:tint="@color/im_badge_foreground"
+            android:contentDescription="@null" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_im_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/LIME.Body" />
+
+        <TextView
+            android:id="@+id/tv_im_desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/LIME.Caption"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switch_im_enabled"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- Trailing chevron (matches the demo's chevron_right after the toggle).
+         Shown on IM rows and on the 關聯字庫 row; both drill into a detail. -->
+    <ImageView
+        android:id="@+id/iv_im_chevron"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_chevron_right"
+        app:tint="?android:attr/textColorSecondary"
+        android:contentDescription="@null" />
+
+</LinearLayout>

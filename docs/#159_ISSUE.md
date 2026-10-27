@@ -1,0 +1,77 @@
+# Issue #159: Android 三碼 installation registers an unusable IM configuration
+
+## Status
+
+Resolved and closed after reporter confirmation. The reporter's Android v6.1.35 retest failed on Nokia 3.4 and Redmi 13C because the installed 三碼 code was absent from Android's activated-IM picker arrays. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends `tricode` and its names without changing persisted indices. The fix is published in Android v6.1.36 through GitHub and Google Play. After the targeted v6.1.36 retest request at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560, the reporter confirmed that 三碼 now works normally on both phones at https://github.com/lime-ime/limeime/issues/159#issuecomment-5039606167. The issue was closed as completed with acknowledgement https://github.com/lime-ime/limeime/issues/159#issuecomment-5039613977. This confirmation covers the reported Android phone paths only. The separate iOS product/data-table addition is included in public iOS v6.1.35 and later, including the current App Store version 6.1.38. Its remaining work is release QA rather than `6.2.x` product implementation.
+
+## Problem statement
+
+Android v6.1.35 exposes 三碼 v.20260720.3 in the downloadable input-method catalog. On both tested phones, installing that catalog entry makes 三碼 appear in the installed IM list, but selecting it does not activate the intended `limenumsym2` keyboard or Chinese composition. The reporter sees an ordinary keyboard and can type only English.
+
+The failure also occurs when the reporter removes the catalog-installed copy and imports the coding table into the dedicated 三碼 slot. In contrast, loading the same input method through the 自建 path and manually selecting `LIME+數字符號鍵盤2` displays the intended layout and permits Chinese input.
+
+Source: reporter retest https://github.com/lime-ime/limeime/issues/159#issuecomment-5027623841 after the v6.1.35 request https://github.com/lime-ime/limeime/issues/159#issuecomment-5024835238.
+
+## Confirmed reproduction evidence
+
+Reporter-tested devices:
+
+- Nokia 3.4
+- Redmi 13C
+
+Reported paths:
+
+1. Download 三碼 from the built-in catalog, install it, and select the resulting 三碼 IM.
+2. Observe that the ordinary keyboard appears and only English input works.
+3. Remove the built-in 三碼 IM, import the coding file into the dedicated 三碼 slot, and observe the same failure.
+4. Load it through 自建 instead, manually select `LIME+數字符號鍵盤2`, and observe the intended layout and working Chinese input.
+
+The reporter did not include Android versions in this comment.
+
+## Current implementation facts
+
+- The v6.1.35 asset contains table version `20260720.3`.
+- `ImInstallFragment` routes the catalog download to table code `tricode`.
+- `Database/tricode.limedb` contains the expected `im` property rows, including `imkeys`, `imkeynames`, and a `keyboard` row whose keyboard code is `limenumsym2`.
+- Android startup schema maintenance creates the `tricode` mapping table and seeds the global `limenumsym2` keyboard row.
+- Text import maps `tricode` to `limenumsym2` through `getDefaultKeyboardCodeForImportedIM()` and falls back to `lime` if the requested keyboard row cannot be resolved.
+- Manual 自建 selection proving that `LIME+數字符號鍵盤2` can render and type narrows the defect away from the layout XML and basic mapping content. The failed automatic paths instead point toward table-specific IM registration, keyboard assignment, or activation state.
+
+## Root cause
+
+`LIMEService.buildActivatedIMList()` maps enabled IM rows through the append-only `LIME.IM_CODES` array and silently drops an enabled code when no array index exists. The original 三碼 integration created and enabled `tricode` but did not append it to `IM_CODES`, `IM_FULL_NAMES`, and `IM_SHORT_NAMES`. As a result, the installed entry could not become an activated picker item even though its mapping data and `limenumsym2` keyboard metadata were present. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends the three values at index 14, preserving every existing persisted index. The same arrays also feed preference reverse lookup and legacy-name resolution, covering the catalog and dedicated-table import paths reported by the tester.
+
+## Proposed solution
+
+1. Keep the activated-IM arrays append-only because saved activation state persists their indices.
+2. Keep `tricode`, `三碼輸入法`, and `三碼` aligned at the same appended index in the code, full-name, and short-name arrays.
+3. Verify catalog install and dedicated-table import both expose 三碼 in the picker and preserve `limenumsym2` plus Chinese composition.
+4. Verify removal followed by reinstall/import so stale rows from the failed v6.1.35 path cannot preserve the defect.
+
+## Follow-up questions
+
+No further reporter follow-up is needed for the resolved Android paths. The reporter did not provide Android versions or restate the installed build/channel, but confirmed normal behavior on both originally tested phones after the v6.1.36 retest request.
+
+## Verification plan
+
+### Android
+
+- Install a clean v6.1.35-equivalent database state and download the built-in 三碼 v.20260720.3 asset.
+- Confirm the installed IM is `tricode`, its keyboard assignment is `limenumsym2`, and its `imkeys` include letters plus `'`, `,`, `.`, `/`, and `;`.
+- Activate 三碼 and verify the `lime_num_sym2` layout appears rather than the ordinary English keyboard.
+- Verify `lh` produces the expected 三碼 candidate and each of the five symbol roots enters composition.
+- Remove 三碼, import the coding file into the dedicated 三碼 slot, and repeat the same checks.
+- Verify the existing 自建/manual-selection path remains working.
+- Upgrade from a database that previously installed the broken v6.1.35 configuration and verify stale metadata is repaired or replaced.
+- Android v6.1.36 is published through GitHub and Google Play and includes `935338dc13f70056c5ec22855bdee1b66eb73810`.
+- The signed release candidate passed the built-in catalog install path, activated 三碼 with `limenumsym2`, produced Chinese candidates, and committed a selected candidate.
+- A targeted v6.1.36 retest was requested on the reporter's Nokia 3.4 and Redmi 13C at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560.
+- The reporter confirmed that 三碼 works normally on both phones at https://github.com/lime-ime/limeime/issues/159#issuecomment-5039606167. This closes the reported Android catalog/install, switching, dedicated import, keyboard-selection, and basic-input scope.
+
+### iOS
+
+The reporter supplied no iOS retest evidence. The `tricode` database, catalog registration, default-keyboard mapping, metadata handling, and phone/full-iPad/narrow-iPad `limenumsym2` layouts are present in the public iOS v6.1.35 source and remain in the current public App Store version 6.1.38. The iOS product/data-table addition is therefore shipped, while runtime validation remains incomplete. For retained release QA, verify catalog import, metadata, attribution, automatic `limenumsym2` selection, and basic lookup/input behavior on iPhone, full iPad, and narrow iPad. Preserve author `無書自通`, official source `https://3code-type.github.io/`, and the stated free/non-commercial distribution condition.
+
+## Privacy-safe reporter summary
+
+A community reporter tested the Android v6.1.35 GitHub build on two phone models. The dedicated 三碼 catalog and coding-file import paths installed an entry but did not activate Chinese input or the intended keyboard. The same mapping worked through 自建 after manually selecting `LIME+數字符號鍵盤2`. After the Android v6.1.36 retest request, the reporter confirmed that 三碼 works normally on both phones without restating the installed build or channel. No private support context or personal information is included here.

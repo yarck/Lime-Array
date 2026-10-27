@@ -1,0 +1,457 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/setup_scroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp">
+
+        <!-- Brand Block -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="24dp">
+
+            <ImageView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/logo"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="萊姆輸入法"
+                android:textAppearance="@style/LIME.TabTitle"
+                android:layout_marginStart="16dp" />
+
+        </LinearLayout>
+
+        <!-- Setup heading + step descriptions (restored from prior Android implementation) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/setupHeading"
+            android:textAppearance="@style/LIME.Title1"
+            android:text="@string/setup_im_system_settings"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Status Card: neutral background; icon + text carry state color (iOS parity).
+             Sits BELOW the 啟動萊姆輸入法 heading so the heading leads the section. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/statusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@color/setup_status_bg"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="12dp">
+
+                <ImageView
+                    android:id="@+id/statusIcon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="@null"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:id="@+id/statusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/LIME.Subheadline" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/setupStep1Description"
+            android:textAppearance="@style/LIME.Subheadline"
+            android:text="@string/setup_im_system_settings_description"
+            android:layout_marginBottom="5dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/setupStep2Description"
+            android:textAppearance="@style/LIME.Subheadline"
+            android:text="@string/setup_im_system_impicker_description"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Button: System Settings -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSetupImSystemSetting"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/setup_im_wizard_nextstep"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Button: IM Picker — bordered (12% green tinted fill, no stroke) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSetupImSystemIMPicker"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            app:backgroundTint="@color/button_tint_primary"
+            android:textColor="?attr/colorPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/setup_im_system_selectLIME"
+            android:layout_marginBottom="24dp" />
+
+        <!-- §4.3 Installed-IM status block. Mirrors the IM tab's reality so Setup
+             can surface "no IM installed" / "all disabled" and route the user to
+             the 輸入法 tab. Same tinted-banner + button pattern as the voice card.
+             See docs/LIME_SETTINGS.md §4.3. -->
+        <LinearLayout
+            android:id="@+id/imStatusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/imStatusBanner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/status_tint_red"
+                android:padding="12dp">
+
+                <ImageView
+                    android:id="@+id/imStatusIcon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_status_error"
+                    android:contentDescription="@null"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:id="@+id/imStatusText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/im_list_empty_title"
+                    android:textAppearance="@style/LIME.Subheadline" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/imStatusButton"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                app:backgroundTint="@color/button_tint_primary"
+                android:textColor="?attr/colorPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/im_list_empty_nudge"
+                android:layout_marginTop="12dp" />
+
+        </LinearLayout>
+
+        <!-- Voice permission block: a tinted status BANNER (icon + title only),
+             then the description and action button on the plain page background. -->
+        <LinearLayout
+            android:id="@+id/voicePermissionCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="24dp">
+
+            <!-- Tinted banner row (only this carries the status tint) -->
+            <LinearLayout
+                android:id="@+id/voicePermissionBanner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/status_tint_red"
+                android:padding="12dp">
+
+                <ImageView
+                    android:id="@+id/voicePermissionIcon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/sym_keyboard_voice_light"
+                    android:contentDescription="@null"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:id="@+id/voicePermissionTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/setup_voice_permission_title"
+                    android:textAppearance="@style/LIME.Subheadline" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/voicePermissionDetail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/setup_voice_permission_not_granted"
+                android:textAppearance="@style/LIME.Subheadline"
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp" />
+
+            <!-- Bordered (12% green tinted fill, no stroke) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/voicePermissionButton"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                app:backgroundTint="@color/button_tint_primary"
+                android:textColor="?attr/colorPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/setup_voice_permission_open_settings"
+                android:layout_marginTop="12dp" />
+
+        </LinearLayout>
+
+        <!-- Rating prompt (§4.4): tonal card; body tap → Google Play, × → dismiss
+             dialog. Shown only when the keyboard is enabled + active + an IM is
+             installed & enabled, and the user hasn't dismissed/snoozed it. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/ratingCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="@color/setup_status_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- Card body — tapping anywhere opens the Play listing. -->
+                <LinearLayout
+                    android:id="@+id/ratingCardBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:paddingEnd="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_rating_title"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="★★★★★"
+                            android:textColor="@color/rating_star"
+                            android:textSize="16sp"
+                            android:letterSpacing="0.06"
+                            android:layout_marginTop="6dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_rating_subtitle"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="14sp"
+                            android:layout_marginTop="6dp" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="?android:attr/textColorSecondary"
+                        android:contentDescription="@null" />
+
+                </LinearLayout>
+
+                <!-- × dismiss — its own tap target in the top-right corner. -->
+                <ImageButton
+                    android:id="@+id/ratingDismiss"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_close_18"
+                    app:tint="?android:attr/textColorSecondary"
+                    android:scaleType="fitCenter"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/setup_rating_dismiss" />
+
+            </FrameLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- About footer: full-bleed separator, three equal-width link chips
+             (使用手冊 / 版權說明 / 原始碼) and a one-line copyright banner.
+             Same IDs as before so SetupFragment's click handlers are unchanged;
+             only the layout is re-laid-out to match the iOS About footer. -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="-16dp"
+            android:layout_marginEnd="-16dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="16dp"
+            android:background="?attr/colorControlHighlight" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:baselineAligned="false">
+
+            <!-- 使用手冊 chip -->
+            <LinearLayout
+                android:id="@+id/txtManualUrl"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="5dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingTop="15dp"
+                android:paddingBottom="13dp"
+                android:background="@drawable/bg_about_chip"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_menu_book_24"
+                    app:tint="?attr/colorPrimary"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:text="@string/about_manual_label"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <!-- 版權說明 chip -->
+            <LinearLayout
+                android:id="@+id/txtLicenseUrl"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:layout_marginEnd="5dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingTop="15dp"
+                android:paddingBottom="13dp"
+                android:background="@drawable/bg_about_chip"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_description_24"
+                    app:tint="?attr/colorPrimary"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:text="@string/about_license_link"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <!-- 原始碼 chip -->
+            <LinearLayout
+                android:id="@+id/txtGithubUrl"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingTop="15dp"
+                android:paddingBottom="13dp"
+                android:background="@drawable/bg_about_chip"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_code_24"
+                    app:tint="?attr/colorPrimary"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:text="@string/about_source_label"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- One-line copyright banner (txtVersion: set by SetupFragment) -->
+        <TextView
+            android:id="@+id/txtVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textAppearance="@style/LIME.Footnote" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

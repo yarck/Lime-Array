@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/db_manager_scroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:maxWidth="560dp"
+        android:layout_gravity="center_horizontal">
+
+        <!-- Heading — 34sp bold, matching iOS large title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/title_db_manager"
+            android:textAppearance="@style/LIME.TabTitle"
+            android:paddingTop="8dp"
+            android:paddingBottom="16dp" />
+
+        <!-- Backup — filled (primary) button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDbBackup"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            app:cornerRadius="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="備份資料庫"
+            android:textAllCaps="false"
+            app:icon="@drawable/ic_upload_24"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+ />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="備份包含所有字根、關聯字及喜好設定。"
+            android:textAppearance="@style/LIME.Footnote"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Restore — bordered (12% green tinted fill, no stroke) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDbRestore"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            app:cornerRadius="20dp"
+            app:backgroundTint="@color/button_tint_primary"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="還原資料庫"
+            android:textAllCaps="false"
+            android:textColor="?attr/colorPrimary"
+            app:icon="@drawable/ic_download_24"
+            app:iconTint="?attr/colorPrimary"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+ />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="還原後鍵盤將重新載入資料庫。"
+            android:textAppearance="@style/LIME.Footnote"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Restore default — error (12% red tinted fill, no stroke) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDbRestoreDefault"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+            app:cornerRadius="20dp"
+            app:backgroundTint="@color/button_tint_error"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            android:text="還原預設資料庫"
+            android:textAllCaps="false"
+            android:textColor="@color/setup_status_fg_red"
+            app:icon="@drawable/ic_refresh"
+            app:iconTint="@color/setup_status_fg_red"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+ />
+
+        <!-- Red warning with a leading triangle glyph: this action is irreversible -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <ImageView
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="6dp"
+                android:src="@drawable/ic_warning_15"
+                app:tint="@color/setup_status_fg_red"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/db_restore_default_warning"
+                android:textAppearance="@style/LIME.Footnote"
+                android:textColor="@color/setup_status_fg_red" />
+
+        </LinearLayout>
+
+        <!-- Status section (hidden when empty) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/dbStatusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@color/setup_status_bg"
+            app:cardCornerRadius="10dp">
+
+            <TextView
+                android:id="@+id/dbStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:textAppearance="@style/LIME.Footnote" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

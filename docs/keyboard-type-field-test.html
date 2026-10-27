@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LIME Keyboard Type Fields (#139 combination matrix)</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f7f9;
+      color: #19212c;
+    }
+    body { margin: 0; padding: 18px; }
+    main { max-width: 720px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 22px; line-height: 1.2; }
+    p  { margin: 0 0 14px; color: #53606f; line-height: 1.4; font-size: 13px; }
+    h2 { margin: 22px 0 6px; font-size: 15px; color: #2e3a47; border-bottom: 1px solid #dde3ea; padding-bottom: 4px; }
+    label { display: block; margin: 10px 0; font-size: 12px; font-weight: 650; color: #2e3a47; }
+    code { font-size: 11px; color: #7a4; font-weight: 400; }
+    input, textarea {
+      box-sizing: border-box; display: block; width: 100%; margin-top: 5px;
+      padding: 12px; border: 1px solid #bdc7d4; border-radius: 8px;
+      background: white; color: #16202b; font: inherit;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>LIME Keyboard Type — #139 combination matrix</h1>
+    <p>Tap each field with LIME active (Array10) and note which keyboard appears
+       (Array10 <code>phone_simple</code> / LIME <code>symbols1</code> / LIME English /
+       iOS system pad). The placeholder states what is expected to be exercised.</p>
+
+    <h2>Plain text baseline</h2>
+    <label>type=text
+      <textarea autocomplete="off" placeholder="default → Array10 phone_simple expected"></textarea>
+    </label>
+    <label>type=text (single line)
+      <input type="text" autocomplete="off" placeholder="default text">
+    </label>
+
+    <h2>The reporter's field (type=&quot;num&quot;)</h2>
+    <label>type=num  <code>(invalid → browser treats as text)</code>
+      <input type="num" autocomplete="off" placeholder="reporter's exact attribute">
+    </label>
+    <label>type=num + inputmode=numeric
+      <input type="num" inputmode="numeric" autocomplete="off" placeholder="num + numeric">
+    </label>
+    <label>type=num + pattern=[0-9]*
+      <input type="num" pattern="[0-9]*" autocomplete="off" placeholder="num + pattern">
+    </label>
+
+    <h2>type=number variants</h2>
+    <label>type=number  <code>(no inputmode)</code>
+      <input type="number" autocomplete="off" placeholder="number, bare">
+    </label>
+    <label>type=number + inputmode=numeric
+      <input type="number" inputmode="numeric" autocomplete="off" placeholder="number + numeric">
+    </label>
+    <label>type=number + inputmode=decimal
+      <input type="number" inputmode="decimal" step="0.01" autocomplete="off" placeholder="number + decimal">
+    </label>
+    <label>type=number + inputmode=tel
+      <input type="number" inputmode="tel" autocomplete="off" placeholder="number + tel">
+    </label>
+    <label>type=number + pattern=[0-9]*
+      <input type="number" pattern="[0-9]*" autocomplete="off" placeholder="number + pattern">
+    </label>
+
+    <h2>type=text + inputmode (inputmode drives the keyboard)</h2>
+    <label>text + inputmode=numeric
+      <input type="text" inputmode="numeric" autocomplete="off" placeholder="text + numeric">
+    </label>
+    <label>text + inputmode=decimal
+      <input type="text" inputmode="decimal" autocomplete="off" placeholder="text + decimal">
+    </label>
+    <label>text + inputmode=tel
+      <input type="text" inputmode="tel" autocomplete="off" placeholder="text + tel">
+    </label>
+    <label>text + inputmode=none
+      <input type="text" inputmode="none" autocomplete="off" placeholder="text + none">
+    </label>
+    <label>text + pattern=[0-9]* (legacy iOS numeric trigger)
+      <input type="text" pattern="[0-9]*" autocomplete="off" placeholder="text + pattern">
+    </label>
+    <label>text + inputmode=numeric + pattern=\d*
+      <input type="text" inputmode="numeric" pattern="\d*" autocomplete="off" placeholder="text + numeric + pattern">
+    </label>
+
+    <h2>type=tel</h2>
+    <label>type=tel
+      <input type="tel" autocomplete="off" placeholder="tel">
+    </label>
+    <label>type=tel + inputmode=tel
+      <input type="tel" inputmode="tel" autocomplete="off" placeholder="tel + tel">
+    </label>
+
+    <h2>Other types</h2>
+    <label>type=search
+      <input type="search" inputmode="search" autocomplete="off" placeholder="search">
+    </label>
+    <label>type=url
+      <input type="url" inputmode="url" autocomplete="off" placeholder="url">
+    </label>
+    <label>type=email
+      <input type="email" inputmode="email" autocomplete="off" placeholder="email">
+    </label>
+    <label>type=password
+      <input type="password" autocomplete="off" placeholder="password (system secure expected)">
+    </label>
+  </main>
+</body>
+</html>

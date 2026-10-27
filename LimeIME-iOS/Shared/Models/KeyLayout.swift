@@ -1,0 +1,709 @@
+﻿/*
+ *
+ *  *
+ *  **    Copyright 2026, The LimeIME Open Source Project
+ *  **
+ *  **    Project Url: http://github.com/lime-ime/limeime/
+ *  **
+ *  **    This program is free software: you can redistribute it and/or modify
+ *  **    it under the terms of the GNU General Public License as published by
+ *  **    the Free Software Foundation, either version 3 of the License, or
+ *  **    (at your option) any later version.
+ *  *
+ *  **    This program is distributed in the hope that it will be useful,
+ *  **    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  **    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  **    GNU General Public License for more details.
+ *  *
+ *  **    You should have received a copy of the GNU General Public License
+ *  **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  *
+ *
+ */
+
+import UIKit
+
+// Keyboard layout data model.
+// Phase 2: phonetic and English layouts are hardcoded here.
+// Phase 3: JSON loader extends this with all 54+ Android layouts.
+
+// MARK: - Special key codes (mirror Android KEYCODE_ values)
+enum LimeKeyCode: Int {
+    case enter          = 10
+    case space          = 32
+    case delete         = -5
+    case shift          = -1
+    case done           = -3   // iOS: dismiss keyboard / globe
+    case switchToSymbol = -2
+    case switchToEnglish = -9
+    case switchToIM     = -10
+    case globe          = -200 // iOS-only: advanceToNextInputMode()
+    case emojiPanel     = -201 // iOS/Android: open emoji keyboard panel
+    case emojiABC       = -202 // iOS/Android: return from emoji panel to English keyboard
+    case emojiCategoryRecent  = -203
+    case emojiCategorySmileys = -204
+    case emojiCategoryPeople  = -205
+    case emojiCategoryAnimals = -206
+    case emojiCategoryFood    = -207
+    case emojiCategoryTravel  = -208
+    case emojiCategoryActivities = -209
+    case emojiCategoryObjects = -210
+    case emojiCategorySymbols = -211
+    case emojiCategoryFlags   = -212
+    case voiceInput           = -220 // Deprecated on iOS: third-party keyboards cannot launch dictation
+    case nextIM              = -20  // cycle to next activated IM (spec §10)
+    case prevIM              = -21  // cycle to previous activated IM (spec §10)
+    case switchSymbolKeyboard = -15  // cycle symbol keyboard pages (spec §10, Android code -15)
+    case switchToPhoneSimple  = -106 // feat#124: English 123 long-press → phone_simple (Android KEYCODE_PHONE_SIMPLE_LONGPRESS)
+    case keyboardOptionsMenu = -100 // long-press keyboard key → show options popup menu (spec §10)
+    case arrowLeft  = -30
+    case arrowRight = -31
+    case arrowUp    = -32
+    case arrowDown  = -33
+}
+
+enum EmojiPanelSource {
+    case english
+    case chineseIM
+
+    var returnKeyTitle: String {
+        switch self {
+        case .english: return "ABC"
+        case .chineseIM: return "中"
+        }
+    }
+
+    static func source(isEnglishOnly: Bool) -> EmojiPanelSource {
+        isEnglishOnly ? .english : .chineseIM
+    }
+}
+
+enum CandidateBarSystemChrome {
+    static func usesLightForeground(systemUserInterfaceStyle: UIUserInterfaceStyle) -> Bool {
+        systemUserInterfaceStyle == .dark
+    }
+
+    static func labelColor(systemUserInterfaceStyle: UIUserInterfaceStyle) -> UIColor {
+        let style: UIUserInterfaceStyle = usesLightForeground(systemUserInterfaceStyle: systemUserInterfaceStyle)
+            ? .dark
+            : .light
+        return UIColor.label.resolvedColor(with: UITraitCollection(userInterfaceStyle: style))
+    }
+}
+
+enum EmojiPanelSizing {
+    static let baseGlyphSize: CGFloat = 32
+    static let baseButtonSize: CGFloat = 54
+    static let baseModeKeyWidth: CGFloat = 64
+    static let baseCategorySpacing: CGFloat = 4
+
+    static func normalizedKeyboardSizeScale(_ scale: CGFloat) -> CGFloat {
+        min(max(scale, 0.8), 1.2)
+    }
+
+    static func glyphScale(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        let normalized = normalizedKeyboardSizeScale(scale)
+        return 1 + (normalized - 1) * 0.5
+    }
+
+    static func emojiGlyphSize(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        baseGlyphSize * glyphScale(keyboardSizeScale: scale)
+    }
+
+    static func categoryGlyphSize(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        emojiGlyphSize(keyboardSizeScale: scale) * 0.65
+    }
+
+    static func backspaceGlyphSize(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        emojiGlyphSize(keyboardSizeScale: scale) * 0.65
+    }
+
+    static func modeKeyGlyphSize(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        emojiGlyphSize(keyboardSizeScale: scale) * 0.8
+    }
+
+    static func buttonSize(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        baseButtonSize * normalizedKeyboardSizeScale(scale)
+    }
+
+    static func categoryButtonSize(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        buttonSize(keyboardSizeScale: scale) * 0.8
+    }
+
+    static func modeKeyWidth(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        max(baseModeKeyWidth, categoryButtonSize(keyboardSizeScale: scale) * 1.35)
+    }
+
+    static func categoryRowHeight(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        categoryButtonSize(keyboardSizeScale: scale) + 12
+    }
+
+    static func categorySpacing(keyboardSizeScale scale: CGFloat) -> CGFloat {
+        baseCategorySpacing * normalizedKeyboardSizeScale(scale)
+    }
+
+    static func visibleRows(isSearchMode: Bool) -> Int {
+        isSearchMode ? 1 : 4
+    }
+}
+
+struct EmojiPanelPaginationResult {
+    let pages: [[Mapping]]
+    let categoryStartDisplayPageIndexes: [Int]
+    let sourcePageIndexes: [Int]
+    let columnCounts: [Int]
+}
+
+enum EmojiPanelPaginator {
+    static func displayPages(sourcePages: [[Mapping]],
+                             cellsPerPage: Int,
+                             rowsPerPage: Int,
+                             categoryButtonCount: Int) -> EmojiPanelPaginationResult {
+        let safeCellsPerPage = max(cellsPerPage, 1)
+        let safeRowsPerPage = max(rowsPerPage, 1)
+        var displayPages: [[Mapping]] = []
+        var sourceIndexes: [Int] = []
+        var columnCounts: [Int] = []
+        var starts = Array(repeating: 0, count: max(categoryButtonCount, sourcePages.count + 1))
+        for (sourceIndex, sourcePage) in sourcePages.enumerated() {
+            let buttonTag = sourceIndex + 1
+            if buttonTag < starts.count {
+                starts[buttonTag] = displayPages.count
+            }
+            displayPages.append(sourcePage)
+            sourceIndexes.append(sourceIndex)
+            let minimumCells = sourceIndex == 0 ? safeCellsPerPage : 1
+            let cells = max(sourcePage.count, minimumCells)
+            columnCounts.append(max(1, Int(ceil(Double(cells) / Double(safeRowsPerPage)))))
+        }
+        if displayPages.isEmpty {
+            displayPages.append([])
+            sourceIndexes.append(0)
+            columnCounts.append(max(1, Int(ceil(Double(safeCellsPerPage) / Double(safeRowsPerPage)))))
+        }
+        return EmojiPanelPaginationResult(pages: displayPages,
+                                          categoryStartDisplayPageIndexes: starts,
+                                          sourcePageIndexes: sourceIndexes,
+                                          columnCounts: columnCounts)
+    }
+}
+
+enum EmojiRecentSeedQueue {
+    static func merged(recent: [Mapping],
+                       fallback: [Mapping],
+                       limit: Int) -> [Mapping] {
+        let safeLimit = max(limit, 1)
+        var seen = Set<String>()
+        var output: [Mapping] = []
+        for mapping in recent + fallback {
+            guard !mapping.word.isEmpty, seen.insert(mapping.word).inserted else { continue }
+            output.append(mapping)
+            if output.count >= safeLimit {
+                break
+            }
+        }
+        return output
+    }
+}
+
+enum EmojiPanelScrollLayout {
+    static func contentFrame(viewportWidth: CGFloat,
+                             contentWidth: CGFloat,
+                             contentHeight: CGFloat) -> CGRect {
+        CGRect(x: 0,
+               y: 0,
+               width: max(viewportWidth, contentWidth),
+               height: contentHeight)
+    }
+
+    static func cellX(pageOffsetX: CGFloat,
+                      column: Int,
+                      cellWidth: CGFloat,
+                      horizontalInset: CGFloat) -> CGFloat {
+        pageOffsetX + CGFloat(column) * cellWidth + horizontalInset
+    }
+
+    static func unitOffsets(columnCounts: [Int],
+                            cellWidth: CGFloat) -> [CGFloat] {
+        var offsets: [CGFloat] = []
+        var nextOffset: CGFloat = 0
+        for columnCount in columnCounts {
+            offsets.append(nextOffset)
+            nextOffset += CGFloat(max(columnCount, 1)) * cellWidth
+        }
+        return offsets.isEmpty ? [0] : offsets
+    }
+
+    static func contentWidth(unitOffsets: [CGFloat],
+                             columnCounts: [Int],
+                             cellWidth: CGFloat,
+                             horizontalInset: CGFloat,
+                             viewportWidth: CGFloat) -> CGFloat {
+        guard let lastOffset = unitOffsets.last,
+              let lastColumnCount = columnCounts.last else {
+            return max(viewportWidth, 1)
+        }
+        let compactWidth = lastOffset + CGFloat(max(lastColumnCount, 1)) * cellWidth + horizontalInset * 2
+        return max(viewportWidth, compactWidth)
+    }
+
+    static func cellPosition(index: Int, rows: Int) -> (column: Int, row: Int) {
+        let safeRows = max(rows, 1)
+        return (index / safeRows, index % safeRows)
+    }
+}
+
+// MARK: - Popup-character decoding
+/// Mirrors Android `LIMEBaseKeyboard(context:layoutTemplateResId:characters:…)`: a
+/// `popupCharacters` value split on newline is `codes\ndisplay` — the first half supplies
+/// `key.codes`, the second the per-key display char. Without a newline every char is its
+/// own key and supplies both (Android's `labels == null` branch).
+enum PopupCharacterLayoutPolicy {
+    static func keys(from chars: String) -> [KeyDef] {
+        let parts  = chars.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+        let labels = parts.count > 1 ? parts[1].unicodeScalars : parts[0].unicodeScalars
+        // zip truncates a mismatched pair; Android throws StringIndexOutOfBounds there.
+        return zip(parts[0].unicodeScalars, labels).map { KeyDef(code: Int($0.value), label: String($1)) }
+    }
+}
+
+// MARK: - Key definition
+struct KeyDef: Equatable {
+    let code: Int            // Key code. Positive = Unicode codepoint; negative = special
+    let codes: [Int]         // All codes for multi-tap cycling (mirrors Android Key.codes[])
+    let label: String        // Primary label (top half of key)
+    let sublabel: String     // Secondary label (bottom half, e.g. BPMF character)
+    let widthPercent: CGFloat // Key width as percentage of row width (default 10)
+    let icon: String         // SF Symbol name for icon keys (empty = use labels)
+    let isRepeatable: Bool
+    let isModifier: Bool
+    let isSticky: Bool       // Stays pressed (e.g., shift lock)
+    let longPressCode: Int    // 0 = none; -100 = keyboard options menu; other = special action
+    let popupKeyboard: String // e.g. "popup_template", "popup_punctuation"; "" = none
+    let popupCharacters: String // characters for popup_template keys (e.g. "àáâãäåæ"); "" = none
+
+    init(
+        code: Int,
+        codes: [Int] = [],
+        label: String = "",
+        sublabel: String = "",
+        widthPercent: CGFloat = 10,
+        icon: String = "",
+        isRepeatable: Bool = false,
+        isModifier: Bool = false,
+        isSticky: Bool = false,
+        longPressCode: Int = 0,
+        popupKeyboard: String = "",
+        popupCharacters: String = ""
+    ) {
+        self.code = code
+        self.codes = codes.isEmpty ? [code] : codes
+        self.label = label
+        self.sublabel = sublabel
+        self.widthPercent = widthPercent
+        self.icon = icon
+        self.isRepeatable = isRepeatable
+        self.isModifier = isModifier
+        self.isSticky = isSticky
+        self.longPressCode = longPressCode
+        self.popupKeyboard = popupKeyboard
+        self.popupCharacters = popupCharacters
+    }
+
+    /// Copy of this key with a different width — used by the split keyboard to cut a
+    /// wide key (space) into a left piece and a right-half clone (Android parity).
+    func withWidth(_ widthPercent: CGFloat) -> KeyDef {
+        KeyDef(code: code, codes: codes, label: label, sublabel: sublabel,
+               widthPercent: widthPercent, icon: icon, isRepeatable: isRepeatable,
+               isModifier: isModifier, isSticky: isSticky, longPressCode: longPressCode,
+               popupKeyboard: popupKeyboard, popupCharacters: popupCharacters)
+    }
+
+    /// Returns the string character to append to the composing code.
+    /// Returns nil for special/modifier keys.
+    var codeCharacter: String? {
+        guard code > 0, let scalar = Unicode.Scalar(code) else { return nil }
+        return String(scalar)
+    }
+
+    var isSpecialKey: Bool { code < 0 }
+}
+
+// MARK: - Key row
+struct KeyRow: Equatable {
+    let keys: [KeyDef]
+    let isBottomRow: Bool
+
+    init(keys: [KeyDef], isBottomRow: Bool = false) {
+        self.keys = keys
+        self.isBottomRow = isBottomRow
+    }
+}
+
+// MARK: - Split partition
+/// SPLIT_ONE_HAND_KB: Android-parity split partition (LIMEBaseKeyboard.loadKeyboard).
+/// The border sits after floor(columns/2) standard columns — a key belongs to the
+/// right half when its LEFT edge reaches the border. A wide key (space) that crosses
+/// the border is cut at it and the remainder cloned onto the right half, so space
+/// appears on both sides like Android's split bottom row.
+enum SplitPartition {
+    static func partition(_ keys: [KeyDef]) -> (left: [KeyDef], right: [KeyDef]) {
+        guard !keys.isEmpty else { return ([], []) }
+        let total = keys.reduce(0) { $0 + $1.widthPercent }
+        let unit = keys.map(\.widthPercent).min() ?? total
+        let columns = max(1, Int((total / unit).rounded()))
+        let border = CGFloat(columns / 2) * unit
+        let eps = unit * 0.05
+
+        var left: [KeyDef] = []
+        var right: [KeyDef] = []
+        var leftEdge: CGFloat = 0
+        for k in keys {
+            let rightEdge = leftEdge + k.widthPercent
+            if rightEdge <= border + eps {
+                left.append(k)
+            } else if leftEdge >= border - eps {
+                right.append(k)
+            } else if rightEdge - border >= unit - eps {
+                left.append(k.withWidth(border - leftEdge))
+                right.append(k.withWidth(rightEdge - border))
+            } else {
+                // Crosses the border by less than a key width — not worth cloning,
+                // keep it whole on the left (Android leaves such keys unshifted).
+                left.append(k)
+            }
+            leftEdge = rightEdge
+        }
+        return (left, right)
+    }
+}
+
+// MARK: - Keyboard layout
+struct LimeKeyLayout: Equatable {
+    let id: String
+    let rows: [KeyRow]
+
+    // MARK: Phonetic (注音) layout — mirrors lime_phonetic.xml
+    static let phonetic = LimeKeyLayout(id: "lime_phonetic", rows: [
+        KeyRow(keys: [
+            KeyDef(code: 49, label: "1", sublabel: "ㄅ"),
+            KeyDef(code: 50, label: "2", sublabel: "ㄉ"),
+            KeyDef(code: 51, label: "3", sublabel: "ˇ"),
+            KeyDef(code: 52, label: "4", sublabel: "ˋ"),
+            KeyDef(code: 53, label: "5", sublabel: "ㄓ"),
+            KeyDef(code: 54, label: "6", sublabel: "ˊ"),
+            KeyDef(code: 55, label: "7", sublabel: "˙"),
+            KeyDef(code: 56, label: "8", sublabel: "ㄚ"),
+            KeyDef(code: 57, label: "9", sublabel: "ㄞ"),
+            KeyDef(code: 48, label: "0", sublabel: "ㄢ"),
+        ]),
+        KeyRow(keys: [
+            KeyDef(code: 113, label: "q", sublabel: "ㄆ"),
+            KeyDef(code: 119, label: "w", sublabel: "ㄊ"),
+            KeyDef(code: 101, label: "e", sublabel: "ㄍ"),
+            KeyDef(code: 114, label: "r", sublabel: "ㄐ"),
+            KeyDef(code: 116, label: "t", sublabel: "ㄔ"),
+            KeyDef(code: 121, label: "y", sublabel: "ㄗ"),
+            KeyDef(code: 117, label: "u", sublabel: "ㄧ"),
+            KeyDef(code: 105, label: "i", sublabel: "ㄛ"),
+            KeyDef(code: 111, label: "o", sublabel: "ㄟ"),
+            KeyDef(code: 112, label: "p", sublabel: "ㄣ"),
+        ]),
+        KeyRow(keys: [
+            KeyDef(code: 97,  label: "a", sublabel: "ㄇ"),
+            KeyDef(code: 115, label: "s", sublabel: "ㄋ"),
+            KeyDef(code: 100, label: "d", sublabel: "ㄎ"),
+            KeyDef(code: 102, label: "f", sublabel: "ㄑ"),
+            KeyDef(code: 103, label: "g", sublabel: "ㄕ"),
+            KeyDef(code: 104, label: "h", sublabel: "ㄘ"),
+            KeyDef(code: 106, label: "j", sublabel: "ㄨ"),
+            KeyDef(code: 107, label: "k", sublabel: "ㄜ"),
+            KeyDef(code: 108, label: "l", sublabel: "ㄠ"),
+            KeyDef(code: 59,  label: ";", sublabel: "ㄤ"),
+        ]),
+        KeyRow(keys: [
+            KeyDef(code: 122, label: "z", sublabel: "ㄈ"),
+            KeyDef(code: 120, label: "x", sublabel: "ㄌ"),
+            KeyDef(code: 99,  label: "c", sublabel: "ㄏ"),
+            KeyDef(code: 118, label: "v", sublabel: "ㄒ"),
+            KeyDef(code: 98,  label: "b", sublabel: "ㄖ"),
+            KeyDef(code: 110, label: "n", sublabel: "ㄙ"),
+            KeyDef(code: 109, label: "m", sublabel: "ㄩ"),
+            KeyDef(code: 44,  label: ",", sublabel: "ㄝ"),
+            KeyDef(code: 46,  label: ".", sublabel: "ㄡ"),
+            KeyDef(code: 47,  label: "/", sublabel: "ㄥ"),
+        ]),
+        KeyRow(keys: [
+            KeyDef(code: LimeKeyCode.done.rawValue,            widthPercent: 14, icon: "keyboard.chevron.compact.down", isRepeatable: false, isModifier: true, longPressCode: LimeKeyCode.keyboardOptionsMenu.rawValue),
+            KeyDef(code: LimeKeyCode.shift.rawValue,           widthPercent: 14, icon: "shift",           isRepeatable: false, isModifier: true, isSticky: true),
+            KeyDef(code: LimeKeyCode.switchToEnglish.rawValue, label: "ABC",    widthPercent: 14,                              isModifier: true),
+            KeyDef(code: 32,                                   widthPercent: 24, icon: "space.bar"),
+            KeyDef(code: 45,  label: "-", sublabel: "ㄦ",     widthPercent: 6),
+            KeyDef(code: LimeKeyCode.delete.rawValue,          widthPercent: 14, icon: "delete.backward", isRepeatable: true,  isModifier: true),
+            KeyDef(code: LimeKeyCode.enter.rawValue,           widthPercent: 14, icon: "return",          isRepeatable: false, isModifier: true),
+        ], isBottomRow: true),
+    ])
+
+    // MARK: English (ABC) layout — mirrors lime_abc.xml
+    static let english = LimeKeyLayout(id: "lime_abc", rows: [
+        KeyRow(keys: [
+            KeyDef(code: 49, label: "1"), KeyDef(code: 50, label: "2"),
+            KeyDef(code: 51, label: "3"), KeyDef(code: 52, label: "4"),
+            KeyDef(code: 53, label: "5"), KeyDef(code: 54, label: "6"),
+            KeyDef(code: 55, label: "7"), KeyDef(code: 56, label: "8"),
+            KeyDef(code: 57, label: "9"), KeyDef(code: 48, label: "0"),
+        ]),
+        KeyRow(keys: [
+            KeyDef(code: 97,  label: "a"), KeyDef(code: 98,  label: "b"),
+            KeyDef(code: 99,  label: "c"), KeyDef(code: 100, label: "d"),
+            KeyDef(code: 101, label: "e"), KeyDef(code: 102, label: "f"),
+            KeyDef(code: 103, label: "g"), KeyDef(code: 104, label: "h"),
+            KeyDef(code: 105, label: "i"), KeyDef(code: 106, label: "j"),
+        ]),
+        KeyRow(keys: [
+            KeyDef(code: 107, label: "k"), KeyDef(code: 108, label: "l"),
+            KeyDef(code: 109, label: "m"), KeyDef(code: 110, label: "n"),
+            KeyDef(code: 111, label: "o"), KeyDef(code: 112, label: "p"),
+            KeyDef(code: 113, label: "q"), KeyDef(code: 114, label: "r"),
+            KeyDef(code: 115, label: "s"),
+        ]),
+        KeyRow(keys: [
+            KeyDef(code: LimeKeyCode.shift.rawValue,  widthPercent: 15, icon: "shift",           isRepeatable: false, isModifier: true, isSticky: true),
+            KeyDef(code: 116, label: "t"), KeyDef(code: 117, label: "u"),
+            KeyDef(code: 118, label: "v"), KeyDef(code: 119, label: "w"),
+            KeyDef(code: 120, label: "x"), KeyDef(code: 121, label: "y"),
+            KeyDef(code: 122, label: "z"),
+            KeyDef(code: LimeKeyCode.delete.rawValue, widthPercent: 15, icon: "delete.backward", isRepeatable: true,  isModifier: true),
+        ]),
+        KeyRow(keys: [
+            KeyDef(code: LimeKeyCode.done.rawValue,           widthPercent: 15, icon: "keyboard.chevron.compact.down", isRepeatable: false, isModifier: true, longPressCode: LimeKeyCode.keyboardOptionsMenu.rawValue),
+            KeyDef(code: LimeKeyCode.switchToIM.rawValue,     label: "中文", widthPercent: 10,                         isModifier: true),
+            KeyDef(code: 44,  label: ",",                     widthPercent: 10),
+            KeyDef(code: 32,                                  widthPercent: 30, icon: "space.bar"),
+            KeyDef(code: 46,  label: ".",                     widthPercent: 10),
+            KeyDef(code: LimeKeyCode.switchToSymbol.rawValue, label: "#+",     widthPercent: 10,                      isModifier: true),
+            KeyDef(code: LimeKeyCode.enter.rawValue,          widthPercent: 15, icon: "return",   isRepeatable: false, isModifier: true),
+        ], isBottomRow: true),
+    ])
+}
+
+enum CandidateExpansionPolicy {
+    static func shouldExpand(hasCandidatesShown: Bool,
+                             composing: String,
+                             hasChineseSymbolCandidatesShown: Bool) -> Bool {
+        return hasCandidatesShown
+    }
+}
+
+enum KeyboardGesturePolicy {
+    static func shouldUseDualRowGesture(isPad: Bool, layoutId: String, keyDef: KeyDef) -> Bool {
+        isPad
+            && layoutId.contains("_ipad")
+            && keyDef.longPressCode != 0
+            && keyDef.longPressCode != LimeKeyCode.keyboardOptionsMenu.rawValue
+            && keyDef.popupKeyboard.isEmpty
+    }
+
+    /// Whether `keyDef` should receive the LIME options-menu long-press recognizer.
+    /// In legacy iPhone globe mode the `-3` keyboard key releases its long-press
+    /// to the iOS system input-mode picker, so it must NOT get the LIME gesture.
+    static func shouldUseLimeOptionsMenuGesture(keyDef: KeyDef,
+                                                 legacyGlobeMode: Bool = false) -> Bool {
+        if legacyGlobeMode && keyDef.code == LimeKeyCode.done.rawValue {
+            return false
+        }
+        return keyDef.code == LimeKeyCode.done.rawValue
+            || (keyDef.longPressCode == LimeKeyCode.keyboardOptionsMenu.rawValue
+                && keyDef.code != LimeKeyCode.globe.rawValue)
+    }
+
+    /// Whether `keyDef`'s button should be wired to
+    /// `UIInputViewController.handleInputModeList(from:with:)` (system
+    /// input-mode picker). True only for the `-3` keyboard key in legacy
+    /// globe mode, and only when the host extension provides an
+    /// `inputModeViewController` reference.
+    static func shouldWireSystemPickerOnKeyboardKey(keyDef: KeyDef,
+                                                     legacyGlobeMode: Bool,
+                                                     hasInputModeViewController: Bool) -> Bool {
+        legacyGlobeMode
+            && keyDef.code == LimeKeyCode.done.rawValue
+            && hasInputModeViewController
+    }
+
+    /// SF Symbol override for `keyDef`'s rendered icon. Returns `nil` when the
+    /// caller should use `keyDef.icon` from the JSON / hardcoded layout.
+    /// In legacy iPhone globe mode the `-3` keyboard key paints as `"globe"`.
+    static func iconForKeyboardKey(keyDef: KeyDef,
+                                    legacyGlobeMode: Bool) -> String? {
+        if legacyGlobeMode && keyDef.code == LimeKeyCode.done.rawValue {
+            return "globe"
+        }
+        return nil
+    }
+}
+
+enum ShiftResetPolicy {
+    static func shouldResetAfterCharacter(isShiftOn: Bool,
+                                          capsLock: Bool,
+                                          shiftKeyIsHeld: Bool) -> Bool {
+        isShiftOn && !capsLock && !shiftKeyIsHeld
+    }
+
+    static func shouldResetAfterShiftRelease(capsLock: Bool,
+                                             holdModifiedCharacter: Bool) -> Bool {
+        !capsLock && holdModifiedCharacter
+    }
+}
+
+enum ShiftPressPolicy {
+    static func shouldHandleShiftPress(wasShiftKeyHeld: Bool) -> Bool {
+        !wasShiftKeyHeld
+    }
+}
+
+struct ShiftTapState {
+    let shifted: Bool
+    let capsLock: Bool
+}
+
+enum ShiftTapPolicy {
+    static func nextState(shifted: Bool,
+                          capsLock: Bool,
+                          doubleTap: Bool) -> ShiftTapState {
+        if capsLock {
+            return ShiftTapState(shifted: false, capsLock: false)
+        }
+        if doubleTap {
+            return ShiftTapState(shifted: true, capsLock: true)
+        }
+        return ShiftTapState(shifted: !shifted, capsLock: false)
+    }
+}
+
+enum ShiftDoubleTapPolicy {
+    static func lastTapTimeAfterKey(primaryCode: Int,
+                                    lastShiftTapTime: TimeInterval) -> TimeInterval {
+        primaryCode == LimeKeyCode.shift.rawValue ? lastShiftTapTime : 0
+    }
+
+    static func isDoubleTap(lastShiftTapTime: TimeInterval,
+                            now: TimeInterval,
+                            timeout: TimeInterval) -> Bool {
+        lastShiftTapTime > 0 && now - lastShiftTapTime <= timeout
+    }
+}
+
+enum ShiftHoldTouchPolicy {
+    static func isShiftStillHeld(activeTouchCount: Int) -> Bool {
+        activeTouchCount > 1
+    }
+
+    static func isShiftStillHeld(activeTouchCount: Int,
+                                 wasShiftAlreadyHeld: Bool) -> Bool {
+        (wasShiftAlreadyHeld && activeTouchCount > 0) || activeTouchCount > 1
+    }
+}
+
+/// Up/Down caret movement for the arrow key row (issue #224).
+///
+/// Measured on iOS 26.5 against a native `UITextView`: `UITextDocumentProxy`
+/// context is *paragraph-limited*. `documentContextBeforeInput` never reaches
+/// past the start of the caret's own line (at a line start it is just `"\n"`),
+/// and `documentContextAfterInput` is `nil` at the end of a line — end-of-line
+/// and end-of-document are indistinguishable. So the old "find the newline in
+/// the context" search could never see the boundary it needed: it walked to the
+/// current line's edge and stopped, and from a line start it did nothing at all.
+///
+/// Instead, walk to the line edge and step one character further to cross the
+/// newline — but in a *later run-loop turn*, because an out-of-range offset is
+/// ignored outright rather than clamped, and UIKit coalesces adjustments issued in
+/// the same turn. Measured: combined into one turn, a move from the start of the
+/// last line overshoots the document end and the caret goes nowhere at all.
+enum CaretMovePolicy {
+    /// Signed distance from the caret to the near edge of its own line — the end of
+    /// the line when moving down, the start when moving up. 0 when already there.
+    /// The caller then steps ±1 separately to cross the newline.
+    static func lineEdgeOffset(forward: Bool, before: String?, after: String?) -> Int {
+        if forward {
+            let after = after ?? ""
+            return after.firstIndex(of: "\n")
+                .map { after.distance(from: after.startIndex, to: $0) } ?? after.count
+        }
+        let before = before ?? ""
+        // Distance back to the line start = the caret's column. Computed from the
+        // last newline rather than the whole length so a host that hands back more
+        // than one line of context behaves the same as a paragraph-limited one.
+        let column = before.lastIndex(of: "\n")
+            .map { before.distance(from: before.index(after: $0), to: before.endIndex) }
+            ?? before.count
+        return -column
+    }
+    // ponytail: crosses hard newlines only — the caret lands on the adjacent line's
+    // near edge rather than holding its column, and a visually wrapped line is not a
+    // boundary at all. Both need geometry (or a settled re-read after the async
+    // adjustTextPosition) that UITextDocumentProxy does not expose. See #224_ISSUE.md.
+}
+
+enum EnglishKeyboardPolicy {
+    private static let closingPunctuation: Set<Character> = [
+        "\"", "'", ")", "]", "}",
+        "\u{201D}", "\u{2019}",
+    ]
+
+    private static let abbreviationWords: Set<String> = [
+        "Mr", "Mrs", "Ms", "Dr", "Prof", "Jr", "Sr", "St",
+        "etc", "vs", "Ltd", "Inc", "Co", "Mt", "Ft",
+    ]
+
+    static func shouldAutoCapitalize(before: String) -> Bool {
+        if before.isEmpty { return true }
+
+        var s = Substring(before)
+        var hasBoundaryWhitespace = false
+        while let last = s.last, last == " " || last == "\t" {
+            hasBoundaryWhitespace = true
+            s = s.dropLast()
+        }
+        while let last = s.last, closingPunctuation.contains(last) {
+            s = s.dropLast()
+        }
+
+        if let last = s.last, last == "\n" || last == "\r" { return true }
+        guard hasBoundaryWhitespace else { return false }
+        guard let term = s.last, term == "." || term == "!" || term == "?" else { return false }
+
+        if term == ".", isAbbreviationBeforeDot(s.dropLast()) {
+            return false
+        }
+        return true
+    }
+
+    static func shouldInsertPeriodForDoubleSpace(before: String) -> Bool {
+        guard before.hasSuffix(" "), before.count >= 2 else { return false }
+        let beforeSpace = before.dropLast()
+        guard let previous = beforeSpace.last else { return false }
+
+        if ".!?,:;".contains(previous) { return false }
+        let tokenStart = beforeSpace.lastIndex(where: { $0.isWhitespace })
+            .map { beforeSpace.index(after: $0) } ?? beforeSpace.startIndex
+        let token = String(beforeSpace[tokenStart...])
+        if token.contains("://") || token.contains(".") { return false }
+
+        if previous.isLetter || previous.isNumber { return true }
+        return closingPunctuation.contains(previous)
+    }
+
+    private static func isAbbreviationBeforeDot(_ beforeDot: Substring) -> Bool {
+        guard let last = beforeDot.last, last.isLetter else { return false }
+
+        if beforeDot.dropLast().last == "." { return true }
+
+        var idx = beforeDot.endIndex
+        while idx > beforeDot.startIndex {
+            let prev = beforeDot.index(before: idx)
+            if beforeDot[prev].isLetter { idx = prev } else { break }
+        }
+        let word = String(beforeDot[idx..<beforeDot.endIndex])
+        return abbreviationWords.contains(word)
+    }
+}

@@ -1,0 +1,106 @@
+﻿/*
+ *
+ *  *
+ *  **    Copyright 2026, The LimeIME Open Source Project
+ *  **
+ *  **    Project Url: http://github.com/lime-ime/limeime/
+ *  **
+ *  **    This program is free software: you can redistribute it and/or modify
+ *  **    it under the terms of the GNU General Public License as published by
+ *  **    the Free Software Foundation, either version 3 of the License, or
+ *  **    (at your option) any later version.
+ *  *
+ *  **    This program is distributed in the hope that it will be useful,
+ *  **    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  **    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  **    GNU General Public License for more details.
+ *  *
+ *  **    You should have received a copy of the GNU General Public License
+ *  **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  *
+ *
+ */
+
+// ReverseLookupSettingsView.swift
+// LimeIME-iOS
+//
+// Per-IM reverse lookup source pickers.
+// Spec §8.4.1.
+
+import SwiftUI
+
+// MARK: - ReverseLookupSettingsView
+
+struct ReverseLookupSettingsView: View {
+
+    @EnvironmentObject private var manageImController: ManageImController
+    @Environment(\.dismiss) private var dismiss
+
+    private let prefs = LIMEPreferenceManager.shared
+    @State private var lookupTargets: [LIMEPreferenceManager.ReverseLookupOption] = []
+    @State private var lookupOptions = LIMEPreferenceManager.fallbackReverseLookupOptions
+    @State private var selections: [String: String] = [:]
+
+    var body: some View {
+        Form {
+            Section(header: Text("說明")) {
+                Text("輸入字根無候選字時，以其他輸入法字根標注說明。")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+            .setupMatchedSectionBlock()
+
+            Section(header: Text("各輸入法反查來源")) {
+                if lookupTargets.isEmpty {
+                    Text("尚未啟用任何輸入法")
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(lookupTargets, id: \.value) { target in
+                        lookupPicker(target)
+                    }
+                }
+            }
+            .setupMatchedSectionBlock()
+        }
+        .setupMatchedGroupedSurface()
+        .constrainedDetailLayout("字根反查設定")
+        .task { await loadLookupOptions() }
+    }
+
+    private func lookupPicker(_ target: LIMEPreferenceManager.ReverseLookupOption) -> some View {
+        Picker(target.label, selection: binding(for: target.value)) {
+            ForEach(lookupOptions, id: \.value) { option in
+                Text(option.label).tag(option.value)
+            }
+        }
+        .pickerStyle(.menu)
+    }
+
+    private func binding(for tableNick: String) -> Binding<String> {
+        Binding(
+            get: { selections[tableNick] ?? prefs.reverseLookup(for: tableNick) },
+            set: { value in
+                selections[tableNick] = value
+                prefs.setReverseLookup(value, for: tableNick)
+                // §1.8: reverse-lookup is keyboard-owned; push the change through the
+                // one-time app→kb inbox (the keyboard no longer reads it from cold).
+                if let base = FileManager.default.containerURL(
+                    forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
+                   let defaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) {
+                    try? PrefInbox.write(base: base, defaults: defaults,
+                                         reverseLookup: (im: tableNick, value: value))
+                }
+            }
+        )
+    }
+
+    private func loadLookupOptions() async {
+        let configs = await manageImController.loadIMList()
+        let options = LIMEPreferenceManager.reverseLookupOptions(from: configs)
+        lookupOptions = options
+        lookupTargets = LIMEPreferenceManager.reverseLookupTargets(from: configs)
+        selections = Dictionary(uniqueKeysWithValues: lookupTargets.map { target in
+            (target.value, prefs.reverseLookup(for: target.value))
+        })
+    }
+}
