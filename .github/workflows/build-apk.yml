@@ -2,7 +2,7 @@ name: Build Lime-Array APK
 
 on:
   push:
-    branches: [lime-array]
+    branches: [main, lime-array]
   workflow_dispatch:
 
 permissions:
