@@ -31,6 +31,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.LinearLayout;
 
 import org.limeime.LIMEService;
@@ -45,6 +46,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
     private ImageButton mEmojiButton;
     private ImageButton mRightButton;
     private ImageButton mKeyboardButton;
+    private TextView mModeStatus; // Lime-Array: 中/英 + IM name
     private View mActionRow;
     private View mRightButtonParent;
     private CandidateView mCandidateView;
@@ -90,6 +92,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
             mEmojiButton = findViewById(R.id.candidate_emoji);
             mRightButton = findViewById(R.id.candidate_right);
             mKeyboardButton = findViewById(R.id.candidate_keyboard);
+            mModeStatus = findViewById(R.id.candidate_mode_status);
             if (mEmojiButton != null && mEmojiButton.getParent() instanceof View) {
                 mActionRow = (View) mEmojiButton.getParent();
             }
@@ -247,9 +250,35 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
             if (mRightButtonParent != null) {
                 mRightButtonParent.setVisibility((showIdleTools || showActiveChrome) ? View.VISIBLE : View.GONE);
             }
+            updateModeStatus(showKeyboardButton);
         }
         
         super.requestLayout();
+    }
+
+    /**
+     * Lime-Array: while the soft keyboard is hidden (e.g. a hardware keyboard is attached), keep
+     * the right-hand tool group visible and show the current 中/英 mode and IM name beside the
+     * show-keyboard button.
+     */
+    private void updateModeStatus(boolean keyboardHidden) {
+        if (mModeStatus == null) return;
+        if (keyboardHidden && mService != null) {
+            String label = mService.getInputModeStatusLabel();
+            if (!label.contentEquals(mModeStatus.getText())) mModeStatus.setText(label);
+            if (mCandidateView != null) mModeStatus.setTextColor(mCandidateView.mColorNormalText);
+            mModeStatus.setVisibility(View.VISIBLE);
+            if (mKeyboardButton != null) mKeyboardButton.setVisibility(View.VISIBLE);
+            if (mRightButtonParent != null) mRightButtonParent.setVisibility(View.VISIBLE);
+        } else {
+            mModeStatus.setVisibility(View.GONE);
+        }
+    }
+
+    private int modeStatusWidth() {
+        if (mModeStatus == null || mModeStatus.getVisibility() != View.VISIBLE) return 0;
+        return Math.round(mModeStatus.getPaint().measureText(mModeStatus.getText().toString()))
+                + mModeStatus.getPaddingStart() + mModeStatus.getPaddingEnd();
     }
 
     static int actionRowBackgroundColor(int candidateBackground) {
@@ -349,6 +378,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
                 if (mRightButtonParent != null) {
                     mRightButtonParent.setVisibility((showIdleTools || showActiveChrome) ? View.VISIBLE : View.GONE);
                 }
+                updateModeStatus(mService != null && mService.isKeyboardViewHidden());
                 ViewGroup.LayoutParams params = mCandidateView.getLayoutParams();
                 if (params instanceof LinearLayout.LayoutParams) {
                     LinearLayout.LayoutParams llParams = (LinearLayout.LayoutParams) params;
@@ -383,6 +413,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
                     if (rightVisible) {
                         buttonsWidth += buttonWidth;
                     }
+                    buttonsWidth += modeStatusWidth();
                     
                     int maxCandidateWidth = containerWidth - buttonsWidth;
                     if (DEBUG) {

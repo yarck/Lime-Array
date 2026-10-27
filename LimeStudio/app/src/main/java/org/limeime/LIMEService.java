@@ -839,6 +839,13 @@ public class LIMEService extends InputMethodService
             if (mInputView != null) {
                 mInputView.setVisibility(View.GONE);
             }
+        } else if (isHardwareKeyboardAttached()) {
+            // Lime-Array: hardware keyboard attached — keep only the candidate/status strip.
+            hasPhysicalKeyPressed = true;
+            if (mInputView != null) {
+                mInputView.setVisibility(View.GONE);
+            }
+            refreshModeStatus();
         } else {
             // No composing text to preserve, reset hasPhysicalKeyPressed and show keyboard view
             hasPhysicalKeyPressed = false;
@@ -907,7 +914,13 @@ public class LIMEService extends InputMethodService
 
         // Don't reset hasPhysicalKeyPressed if it was just set by a physical key press
         // This prevents losing the first key when InputView is shown after physical key press
-        if (!hasPhysicalKeyPressed) {
+        if (!hasPhysicalKeyPressed && isHardwareKeyboardAttached()) {
+            // Lime-Array: hardware keyboard attached — hide the soft keyboard, keep the strip.
+            hasPhysicalKeyPressed = true;
+            if (mInputView != null) {
+                mInputView.setVisibility(View.GONE);
+            }
+        } else if (!hasPhysicalKeyPressed) {
             // Show keyboard view when hasPhysicalKeyPressed is false
             if (mInputView != null) {
                 mInputView.setVisibility(View.VISIBLE);
@@ -4097,6 +4110,7 @@ public class LIMEService extends InputMethodService
         initialIMKeyboard();
 
         showLimeToast(activeIMName);
+        refreshModeStatus(); // Lime-Array: update IM name label
 
         // Update keyboard xml information
         if (mKeyboardSwitcher != null) {
@@ -4367,6 +4381,7 @@ public class LIMEService extends InputMethodService
         }
 
         showLimeToast(activeIMName);
+        refreshModeStatus(); // Lime-Array: update IM name label
 
     }
 
@@ -4915,6 +4930,38 @@ public class LIMEService extends InputMethodService
         return mInputView != null && mInputView.getVisibility() == View.GONE;
     }
 
+    /** Lime-Array: a hardware (QWERTY) keyboard is connected and not hidden. */
+    private boolean isHardwareKeyboardAttached() {
+        Configuration c = getResources().getConfiguration();
+        return c.keyboard == Configuration.KEYBOARD_QWERTY
+                && c.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
+    }
+
+    /** Lime-Array: label shown beside the show-keyboard button, e.g. "中・行列" or "英". */
+    public String getInputModeStatusLabel() {
+        if (mEnglishOnly) return "英";
+        String name = null;
+        if (activeIM != null && activatedIMList != null && activatedIMShortNameList != null) {
+            int i = activatedIMList.indexOf(activeIM);
+            if (i >= 0 && i < activatedIMShortNameList.size()) name = activatedIMShortNameList.get(i);
+        }
+        if (name == null || name.isEmpty()) {
+            int j = (activeIM == null) ? -1 : indexOfIMCode(LIME.IM_CODES, activeIM);
+            name = (j >= 0 && j < LIME.IM_SHORT_NAMES.length) ? LIME.IM_SHORT_NAMES[j] : "";
+        }
+        return name.isEmpty() ? "中" : "中・" + name;
+    }
+
+    /** Lime-Array: re-evaluate the strip so the mode label follows 中/英 and IM switches. */
+    private void refreshModeStatus() {
+        if (mCandidateInInputView != null) {
+            mCandidateInInputView.post(() -> {
+                mCandidateInInputView.requestLayout();
+                mCandidateInInputView.updateCandidateViewWidthConstraint();
+            });
+        }
+    }
+
 
     /**
      * Restore keyboard view if it's hidden.
@@ -5451,6 +5498,7 @@ public class LIMEService extends InputMethodService
 
         mHasShift = false;
         updateShiftKeyState(getCurrentInputEditorInfo());
+        refreshModeStatus(); // Lime-Array: update 中/英 label
 
         // Update keyboard xml information
         currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
