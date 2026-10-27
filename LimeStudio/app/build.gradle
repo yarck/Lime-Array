@@ -48,7 +48,7 @@ android {
     }
     compileSdkVersion 37
     defaultConfig {
-        applicationId "org.limeime"
+        applicationId "org.limeime.array"
 
         minSdkVersion 25
         targetSdkVersion 37
@@ -128,12 +128,12 @@ android {
 androidComponents {
     onVariants(selector().all()) { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set("LIMEHD${android.defaultConfig.versionCode}-${android.defaultConfig.versionName}.apk")
+            output.outputFileName.set("LimeArray${android.defaultConfig.versionCode}-${android.defaultConfig.versionName}.apk")
         }
     }
 }
 
-def currentReleaseApkName = "LIMEHD${android.defaultConfig.versionCode}-${android.defaultConfig.versionName}.apk"
+def currentReleaseApkName = "LimeArray${android.defaultConfig.versionCode}-${android.defaultConfig.versionName}.apk"
 def preservedReleaseApksDir = layout.buildDirectory.dir("preserved-release-apks")
 def releaseDir = layout.projectDirectory.dir("release")
 def releaseApkOutputDir = layout.buildDirectory.dir("outputs/apk/release")

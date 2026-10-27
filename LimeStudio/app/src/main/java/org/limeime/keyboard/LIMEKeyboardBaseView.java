@@ -200,6 +200,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int mLabelTextSize;
     private int mSmallLabelTextSize;
     private int mSubLabelTextSize;
+    /** Lime-Array: draw two-part labels Samsung-style (big centred main, small top-right sub). */
+    private static final boolean SAMSUNG_KEY_STYLE = true;
+    private final Rect mSamsungTextBounds = new Rect();
     private int mSymbolColorScheme = 0;
     private int mShadowColor;
     private float mShadowRadius;
@@ -1195,7 +1198,40 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     float KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR = 0.55f;
                     float baseline = centerY
                             + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
-                    if (hasSubLabel) {
+                    if (hasSubLabel && SAMSUNG_KEY_STYLE && !hasSecondSubLabel) {
+                        // Lime-Array: Samsung keyboard style.
+                        // Main label (e.g. array code "1⇡" / bopomofo) large and centred;
+                        // sub label (e.g. "q") small in the top-right corner.
+                        int mainSize = (int) (mKeyTextSize * keySizeScale * labelSizeScale);
+                        paint.setTypeface(mKeyTextStyle);
+                        mainSize = fittedTextSize(paint, label, mainSize,
+                                Math.round(drawableWidth * 0.80f),
+                                Math.round(drawableHeight * 0.60f), 0.4f);
+                        paint.setTextSize(mainSize);
+                        paint.getTextBounds(label, 0, label.length(), mSamsungTextBounds);
+                        float mainBaseline = centerY
+                                - (mSamsungTextBounds.top + mSamsungTextBounds.bottom) / 2f;
+                        paint.setColor(keyColor);
+                        canvas.drawText(label, centerX, mainBaseline, paint);
+
+                        int subSize = Math.min(Math.round(mainSize * 0.45f),
+                                (int) (mSubLabelTextSize * keySizeScale * labelSizeScale));
+                        paint.setTypeface(Typeface.DEFAULT);
+                        subSize = fittedTextSize(paint, subLabel, subSize,
+                                Math.round(drawableWidth * 0.40f),
+                                Math.round(drawableHeight * 0.32f), 0.4f);
+                        paint.setTextSize(subSize);
+                        paint.getTextBounds(subLabel, 0, subLabel.length(), mSamsungTextBounds);
+                        final int inset = Math.max(2, Math.round(Math.min(drawableWidth, drawableHeight) * 0.10f));
+                        final Paint.Align oldAlign = paint.getTextAlign();
+                        paint.setTextAlign(Paint.Align.RIGHT);
+                        paint.setColor(subKeyColor);
+                        canvas.drawText(subLabel,
+                                key.width - padding.right - inset,
+                                padding.top + inset - mSamsungTextBounds.top,
+                                paint);
+                        paint.setTextAlign(oldAlign);
+                    } else if (hasSubLabel) {
                         int subLabelSize = (int) (mSubLabelTextSize * keySizeScale * labelSizeScale);
                         final int subLabelHeight;
                         final int subLabelWidth;

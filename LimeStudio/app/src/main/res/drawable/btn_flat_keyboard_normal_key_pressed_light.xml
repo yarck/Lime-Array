@@ -24,11 +24,9 @@
 
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle" >
-    <corners
-        android:radius="3dp"
-        />
+    <corners android:radius="8dp" />
     <solid
-        android:color="@color/second_background_light_fl"
+        android:color="@color/samsung_key_pressed_light"
         />
     <padding
         android:left="1dp"
@@ -42,7 +40,7 @@
         />
 
     <stroke
-        android:width="2dp"
+        android:width="3dp"
         android:color="@color/keyboard_background_light"
         />
 

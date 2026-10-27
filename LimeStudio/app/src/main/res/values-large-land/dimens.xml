@@ -39,4 +39,6 @@
 
     <!-- WB -->
     <dimen name="wb_key_height">68dip</dimen>
-   </resources>
+       <!-- Lime-Array: Samsung-style shorter array keys -->
+    <dimen name="array_key_height">40dip</dimen>
+</resources>

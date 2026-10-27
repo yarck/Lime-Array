@@ -34,7 +34,7 @@
 
     <!-- colors for light theme -->
 
-    <color name="keyboard_background_light">#FFC8C8C8</color>
+    <color name="keyboard_background_light">#FFE6E6EB</color>
     <color name="second_background_light">#FFE1E1E1</color>
     <color name="second_background_light_fl">#FFFBFBFB</color>
     <color name="third_background_light">#FFFAFAFA</color>
@@ -151,4 +151,9 @@
     <color name="button_tint_green">#1F009444</color>
     <color name="button_tint_red">#1FFF3B30</color>
 
+    <!-- Lime-Array: Samsung keyboard style key colors -->
+    <color name="samsung_key_normal_light">#FFFDFDFD</color>
+    <color name="samsung_key_pressed_light">#FFD3D4D9</color>
+    <color name="samsung_fn_key_normal_light">#FFDADBE0</color>
+    <color name="samsung_fn_key_pressed_light">#FFC4C5CA</color>
 </resources>
